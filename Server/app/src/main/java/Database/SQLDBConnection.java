@@ -57,7 +57,7 @@ public class SQLDBConnection {
                 ");";
         String createMotionTable = "CREATE TABLE motion (" +
                 "username varchar(25), " +
-                "time datetime," +
+                "time varchar(50)," +
                 "motionBlob BLOB" +
                 ");";
         String createActivityTable = "CREATE TABLE ativity (" +
