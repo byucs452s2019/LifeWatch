@@ -4,13 +4,16 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import Database.Model.UserModel;
+
 /**
  * Created by haoyucn on 5/23/19.
  */
 
 public class userDAO {
-    SQLDBConnection connection = new SQLDBConnection();
+
     public boolean addUser(String id, String password, String email, int age, String profession) {
+        SQLDBConnection connection = new SQLDBConnection();
         Boolean result = null;
         String statement = "INSERT INTO users (username, password, email, age, profession) " +
                 "VALUES (?, ?, ?, ?, ?)";
@@ -35,5 +38,8 @@ public class userDAO {
         return false;
     }
 
-    public
+    public UserModel getUserByUserName(String username) {
+        ResultSet rs = null;
+        String statement = "Select username, password, email, age, profession from user where username = "
+    }
 }
