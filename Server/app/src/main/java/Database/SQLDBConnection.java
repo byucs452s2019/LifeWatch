@@ -1,4 +1,4 @@
-package sqldao;
+package Database;
 
 import java.io.File;
 import java.io.IOException;
@@ -6,15 +6,12 @@ import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import communication.Result;
 
-/**
- * Created by haoyucn on 12/5/18.
- */
+//import communication.Result;
 
 public class SQLDBConnection {
 
@@ -23,12 +20,13 @@ public class SQLDBConnection {
     static int numberProcess = 0;
 
     public SQLDBConnection() {
-        String fileDirectory = System.getProperty("user.dir") + "/server/src/main/java/dao/SQL/";
+        String fileDirectory = System.getProperty("user.dir") + "/";
 
         String fileName="server.db";
         this.url = fileDirectory + fileName;
         System.out.println(url);
     }
+
 
     public Boolean createDBFile() {
         File file = new File(url);
@@ -50,17 +48,33 @@ public class SQLDBConnection {
     }
 
     private Boolean createTables(){
-        String createUserTable = "CREATE TABLE users (id varchar(25) PRIMARY KEY, password varchar(25), authtoken varchar(25));";
-        String createLobbyTable = "CREATE TABLE lobbies(id varchar(25) PRIMARY KEY, lobby BLOB);";
-        String createGamesTable = "CREATE TABLE games(id varchar(25) PRIMARY KEY, game BLOB, cmdlist BLOB);";
+        String createUserTable = "CREATE TABLE user (" +
+                "username varchar(25) PRIMARY KEY, " +
+                "password varchar(25)," +
+                "email varchar(50)," +
+                "age int(2)," +
+                "profession varchar(25)" +
+                ");";
+        String createMotionTable = "CREATE TABLE motion (" +
+                "username varchar(25), " +
+                "time datetime," +
+                "motionBlob BLOB" +
+                ");";
+        String createActivityTable = "CREATE TABLE ativity (" +
+                "username varchar(25), " +
+                "startTime datetime, " +
+                "endTime datetime," +
+                "activityType varchar(25)," +
+                "location varchar(25)" +
+                ");";
         openConnection();
         PreparedStatement u = getPreparedStatment(createUserTable);
-        PreparedStatement l = getPreparedStatment(createLobbyTable);
-        PreparedStatement g = getPreparedStatment(createGamesTable);
+        PreparedStatement m = getPreparedStatment(createMotionTable);
+        PreparedStatement a = getPreparedStatment(createActivityTable);
         try{
             u.execute();
-            l.execute();
-            g.execute();
+            m.execute();
+            a.execute();
             conn.commit();
             closeConnection();
             return true;
@@ -89,30 +103,30 @@ public class SQLDBConnection {
         }
         return false;
     }
-
-    public ResultSet executeCommand (String stmtString) {
-        if (openConnection()) {
-            try {
-                conn.setAutoCommit(false);
-                Statement stmt = conn.createStatement();
-                numberProcess--;
-                if (stmt.execute(stmtString)) {
-                    conn.commit();
-                    closeConnection();
-                    return stmt.getResultSet();
-                }
-                else {
-                    conn.rollback();
-                }
-            }catch (SQLException e) {
-                e.printStackTrace();
-            }catch (Exception e) {
-                e.printStackTrace();
-            }
-            closeConnection();
-        }
-        return null;
-    }
+//     TODO: never used
+//     public ResultSet executeCommand (String stmtString) {
+//         if (openConnection()) {
+//             try {
+//                 conn.setAutoCommit(false);
+//                 Statement stmt = conn.createStatement();
+//                 numberProcess--;
+//                 if (stmt.execute(stmtString)) {
+//                     conn.commit();
+//                     closeConnection();
+//                     return stmt.getResultSet();
+//                 }
+//                 else {
+//                     conn.rollback();
+//                 }
+//             }catch (SQLException e) {
+//                 e.printStackTrace();
+//             }catch (Exception e) {
+//                 e.printStackTrace();
+//             }
+//             closeConnection();
+//         }
+//         return null;
+//     }
 
     // return null for false result
     public PreparedStatement getPreparedStatment(String sql){
@@ -146,49 +160,49 @@ public class SQLDBConnection {
         return null;
     }
 
-    public Result executeQueryStatement(PreparedStatement p) {
-        try{
-            numberProcess--;
-            ResultSet rs  = p.executeQuery();
+     public ResultSet executeQueryStatement(PreparedStatement p) {
+         try{
+             numberProcess--;
+             ResultSet rs  = p.executeQuery();
 
-            if (rs.getFetchSize() == 0) {
-                conn.rollback();
-                closeConnection();
-                System.out.println("Execute result is false.");
-                System.out.println(p.getWarnings());
-                return new Result(false, p.getWarnings(), "SQL Failure");
-            }
-            conn.commit();
-            closeConnection();
-            return new Result(true, rs, null);
+             if (rs.getFetchSize() == 0) {
+                 conn.rollback();
+                 closeConnection();
+                 System.out.println("Execute result is false.");
+                 System.out.println(p.getWarnings());
+                 return null;
+             }
+             conn.commit();
+             closeConnection();
+             return rs;
 
-        } catch (SQLException e) {
-            e.printStackTrace();
-            closeConnection();
-            return new Result(false, e,e.getMessage());
-        }
-    }
+         } catch (SQLException e) {
+             e.printStackTrace();
+             closeConnection();
+             return null;
+         }
+     }
 
-    public Result executeUpdateStatement(PreparedStatement p) {
-        try{
-            numberProcess--;
-            int count = p.executeUpdate();
-            if (count == 0) {
-                conn.rollback();
-                closeConnection();
-                System.out.println("Execute result is falise.");
-                return new Result(false, p.getWarnings(), "SQL Failure");
-            }
-            conn.commit();
-            closeConnection();
-            return new Result(true, false, null);
+     public boolean executeUpdateStatement(PreparedStatement p) {
+         try{
+             numberProcess--;
+             int count = p.executeUpdate();
+             if (count == 0) {
+                 conn.rollback();
+                 closeConnection();
+                 System.out.println("Execute result is falise.");
+                 return false;
+             }
+             conn.commit();
+             closeConnection();
+             return true;
 
-        } catch (SQLException e) {
-            e.printStackTrace();
-            closeConnection();
-            return new Result(false, e,e.getMessage());
-        }
-    }
+         } catch (SQLException e) {
+             e.printStackTrace();
+             closeConnection();
+             return true;
+         }
+     }
 
     private boolean closeConnection() {
         if (conn != null) {
