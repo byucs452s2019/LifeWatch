@@ -1,10 +1,12 @@
 package Database.Model;
 
+import java.io.Serializable;
+
 /**
  * Created by jasontd on 5/23/19.
  */
 
-public class MotionModel {
+public class MotionModel implements Serializable {
     private float avgXAcceleration;
     private float avgYAcceleration;
     private float avgZAcceleration;

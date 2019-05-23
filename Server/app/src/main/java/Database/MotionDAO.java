@@ -7,6 +7,7 @@ import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -25,14 +26,14 @@ import Database.Model.MotionModel;
  * Created by jasontd on 5/23/19.
  */
 
-public class motionDAO {
+public class MotionDAO{
     SQLDBConnection connection;
     public boolean addMotionEvent(String username, MotionModel motion){
         connection = new SQLDBConnection();
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         Boolean result = null;
-        String statement = "INSERT INTO motion (username, time, motionBlob BLOB) " +
-                "VALUES (?, ?, ?);";
+        String statement = "INSERT INTO motion (username, time, motionBlob) " +
+                "VALUES (?, ?, ?)";
         PreparedStatement ps = connection.getPreparedStatment(statement);
         try{
             ObjectOutput out = new ObjectOutputStream(bos);
@@ -45,14 +46,18 @@ public class motionDAO {
             result = connection.executeUpdateStatement(ps);
         } catch (SQLException e) {
             e.printStackTrace();
+            connection.closeConnection();
             return false;
         } catch (IOException ie){
             ie.printStackTrace();
+            connection.closeConnection();
             return false;
         }
         if (result == null) {
+            connection.closeConnection();
             return false;
         }
+        connection.closeConnection();
         return true;
     }
 
@@ -64,8 +69,10 @@ public class motionDAO {
         PreparedStatement ps = connection.getPreparedStatment(statement);
         result = connection.executeUpdateStatement(ps);
         if (result == null) {
+            connection.closeConnection();
             return false;
         }
+        connection.closeConnection();
         return true;
     }
 
@@ -79,7 +86,7 @@ public class motionDAO {
             String sql = "SELECT * FROM motion WHERE username='" +
                     username + "' and time='" + startTime + "';";
             PreparedStatement stmt = connection.getPreparedStatment(sql);
-            ResultSet result = stmt.executeQuery();
+            ResultSet result = connection.executeQueryStatement(stmt);
             try{
                 while(result.next()){
                     bis = new ByteArrayInputStream(result.getBytes("motionBLOB"));
@@ -93,12 +100,16 @@ public class motionDAO {
                         in.close();
                     }
                 }
-                catch (Exception e){}
+                catch (Exception e){
+                    connection.closeConnection();
+                }
             }
         }
         catch(Exception e){
+            connection.closeConnection();
             e.printStackTrace();
         }
+        connection.closeConnection();
         return m;
     }
 
@@ -106,11 +117,8 @@ public class motionDAO {
         connection = new SQLDBConnection();
         String sql = "DELETE FROM motion where 1=1;";
         PreparedStatement stmt = connection.getPreparedStatment(sql);
-        try {
-            stmt.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        connection.executeUpdateStatement(stmt);
+        connection.closeConnection();
     }
 
 }
