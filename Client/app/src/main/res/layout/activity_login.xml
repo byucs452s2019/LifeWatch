@@ -27,16 +27,6 @@
             android:orientation="vertical">
 
             <Button
-                android:id="@+id/manager_login"
-                android:layout_width="170dp"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="30dp"
-                android:background="@drawable/btn_rounded"
-                android:text="@string/manager_login"
-                android:textColor="@color/white"/>
-
-
-            <Button
                 android:id="@+id/employee_login"
                 android:layout_width="170dp"
                 android:layout_height="wrap_content"

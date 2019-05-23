@@ -31,15 +31,16 @@
             android:layout_centerHorizontal="true"
             android:gravity="center"
             android:textSize="35dp"
-            android:id="@+id/status"/>
+            android:id="@+id/status"
+            android:text="@string/collecting"/>
 
         <Button
             android:id="@+id/alert"
-            android:layout_width="100dp"
+            android:layout_width="150dp"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:layout_centerHorizontal="true"
-            android:layout_marginBottom="45dp"
+            android:layout_marginBottom="100dp"
             android:layout_marginVertical="15dp"
             android:background="@drawable/btn_rounded_green"
             android:text="@string/im_okay" />

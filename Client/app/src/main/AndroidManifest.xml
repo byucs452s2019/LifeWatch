@@ -26,15 +26,6 @@
             android:theme="@style/AppTheme.NoActionBar"
             android:label="@string/employee_view"
             />
-        <activity
-            android:name=".MainActivity"
-            android:theme="@style/AppTheme.NoActionBar"
-            android:label="@string/manager_view"/>
-        <activity
-            android:name=".InfoActivity"
-            android:theme="@style/AppTheme.NoActionBar"
-            android:label="Employee Info"
-            />
     </application>
 
 </manifest>

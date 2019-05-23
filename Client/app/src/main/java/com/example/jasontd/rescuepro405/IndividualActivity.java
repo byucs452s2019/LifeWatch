@@ -18,11 +18,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import java.time.LocalDateTime;
 
 public class IndividualActivity extends AppCompatActivity implements SensorEventListener {
 
     private TextView mStatus;
-    private Button mOkay;
+    private Button mDone;
     private SensorManager sensorManager;
     private long lastUpdate;
     private boolean crashMode;
@@ -34,7 +37,18 @@ public class IndividualActivity extends AppCompatActivity implements SensorEvent
     private float testTime;
     private StringBuilder testLog = new StringBuilder();
     private String green = new String("#7cff00");
-    private String red = new String("#FF0000");
+    private float startTime = 0;
+    private int countXAcceleration = 0;
+    private int countYAcceleration = 0;
+    private int countZAcceleration = 0;
+    private int countXGyro = 0;
+    private int countYGyro = 0;
+    private int countZGyro = 0;
+    private int countTempCel = 0;
+    private int countPressure = 0;
+    private int countHumidity = 0;
+    private MotionRAW motionRAW = new MotionRAW();
+
     //private View view;
 
     @Override
@@ -45,31 +59,67 @@ public class IndividualActivity extends AppCompatActivity implements SensorEvent
         setSupportActionBar(toolbar);
         this.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        setBackground(green);
-
-        mStatus = (TextView) findViewById(R.id.status);
-        mOkay = (Button) findViewById(R.id.alert);
-        crashMode = false;
-        updateStatus(crashMode);
-
-        mOkay.setOnClickListener(new Button.OnClickListener() {
-            @Override
-            public void onClick(View view){
-                crashMode = false;
-                updateStatus(crashMode);
-            }
-        });
+        //setBackground();
 
         //getDefaultSensor(SENSOR_TYPE_ACCELEROMETER);
+        mDone = (Button) findViewById(R.id.alert);
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         lastUpdate = System.currentTimeMillis();
+        mDone.setOnClickListener(new Button.OnClickListener() {
+            @Override
+            public void onClick(View view){
+                saveData();
+            }
+        });
     }
 
     @Override
     public void onSensorChanged(SensorEvent event){
+        if (startTime == 0){
+            startTime = System.currentTimeMillis()/1000;
+            motionRAW.setStartTime(startTime);
+        }
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             getAccelerometer(event);
         }
+        if (event.sensor.getType() == Sensor.TYPE_PRESSURE) {
+            getPressure(event);
+        }
+        if (event.sensor.getType() == Sensor.TYPE_STEP_COUNTER) {
+            getStep(event);
+        }
+        if (event.sensor.getType() == Sensor.TYPE_RELATIVE_HUMIDITY) {
+            getHumidity(event);
+        }
+        if (event.sensor.getType() == Sensor.TYPE_AMBIENT_TEMPERATURE) {
+            getTemp(event);
+        }
+        if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
+            getGyro(event);
+        }
+    }
+
+    private void saveData(){
+        motionRAW.setEndTime(System.currentTimeMillis()/1000);
+        startTime = 0;
+        countXAcceleration = 0;
+        countYAcceleration = 0;
+        countZAcceleration = 0;
+        countXGyro = 0;
+        countYGyro = 0;
+        countZGyro = 0;
+        countTempCel = 0;
+        countPressure = 0;
+        countHumidity = 0;
+        motionRAW = new MotionRAW();
+        Toast.makeText(this, "Motion Event Saved!",
+                Toast.LENGTH_LONG).show();
+        //store in SQL database
+    }
+
+    private float Average(float existing, float add, int talley){
+        float avg = (existing * (talley-1) + add)/talley;
+        return avg;
     }
 
     private void getAccelerometer(SensorEvent event){
@@ -78,67 +128,52 @@ public class IndividualActivity extends AppCompatActivity implements SensorEvent
         float x = values[0]; //laying flat on table, pushed from left to right is (+, aka >9.81)
         float y = values[1]; //laying on table, raised to sky is (+, >9.81)
         float z = values[2]; //laying flat on desk, z is away from/closer from user
-        accelMagnitude = vectorNorm(x,y,z);
-        
-        long actualTime = event.timestamp;
-        
-        if (accelMagnitude > highestMag){highestMag = accelMagnitude;}
-        if (accelMagnitude < lowestMag){lowestMag = accelMagnitude;}
-        
-        //assumes object in near freefall, for MORE than 1.5 seconds. 3 meter fall lasts ~1.75 seconds
-        if (accelMagnitude< 2){
-            if (actualTime - lastUpdate < 1500){
-                return;
-            }
-            else {
-                testTime = actualTime - lastUpdate; //fall time in milliseconds
-                fallMag = accelMagnitude;
-                lastUpdate = actualTime;
-                crashMode = true;
-                testLog.append("Fall detected at " + lastUpdate + "\n");
-                updateStatus(crashMode);
-                //call EMS/family
-            }
-        }
-        /*mStatus.setText("Current mag value: " + accelMagnitude + "\n Highest mag so far: " +
-                highestMag + "\n Lowest mag so far: " + lowestMag + "\n This fall: " + fallMag +
-                "\n Fall time: " +testTime + "\n" + testLog);*/
 
+        countXAcceleration += 1;
+        countYAcceleration += 1;
+        countZAcceleration += 1;
 
+        motionRAW.setAvgXAcceleration(Average(motionRAW.getAvgXAcceleration(), x, countXAcceleration));
+        motionRAW.setAvgYAcceleration(Average(motionRAW.getAvgYAcceleration(), y, countYAcceleration));
+        motionRAW.setAvgZAcceleration(Average(motionRAW.getAvgXAcceleration(), z, countZAcceleration));
     }
 
-    private float vectorNorm(float x, float y, float z){
-        float squareX = (float) Math.pow(x,2);
-        float squareY = (float) Math.pow(y,2); 
-        float squareZ = (float) Math.pow(z,2);
-        return (float) Math.sqrt( squareX + squareY + squareZ );
+    private void getGyro(SensorEvent event){
+        float[] values = event.values;
+        float x = values[0]; //laying flat on table, pushed from left to right is (+, aka >9.81)
+        float y = values[1]; //laying on table, raised to sky is (+, >9.81)
+        float z = values[2]; //laying flat on desk, z is away from/closer from user
+
+        countXGyro += 1;
+        countYGyro += 1;
+        countZGyro += 1;
+
+        motionRAW.setAvgXGyro(Average(motionRAW.getAvgXGyro(), x, countXGyro));
+        motionRAW.setAvgYGyro(Average(motionRAW.getAvgYGyro(), y, countYGyro));
+        motionRAW.setAvgZGyro(Average(motionRAW.getAvgXGyro(), z, countZGyro));
     }
 
-    private void updateStatus(boolean crashmode){
+    private void getPressure(SensorEvent event){
+        float pressure = event.values[0]; //laying flat on table, pushed from left to right is (+, aka >9.81)
+        countPressure += 1;
+        motionRAW.setAvgPressure(Average(motionRAW.getAvgPressure(), pressure, countPressure));
+    }
 
-        if (crashmode == true){
-            mStatus.setText("Crash detected! Notifying Emergency contact shortly..."); //counter?
-            /*mStatus.setText("Current mag value: " + accelMagnitude + "\n Highest mag so far: " +
-                    highestMag + "\n Lowest mag so far: " + lowestMag + "\n This fall: " + fallMag  +
-                    "\n Fall time: " +testTime + "\n" + testLog);*/
-            //mStatus.setBackgroundColor(Color.RED);
-            setBackground(red);
-            mOkay.setEnabled(true);
-            mOkay.setBackgroundResource(R.drawable.btn_rounded_green);
-            //notify Emergency contacts
-        }
-        else {
-            mStatus.setText("Nothing to Report"); //counter?
-            /*mStatus.setText("Current mag value: " + accelMagnitude + "\n Highest mag so far: " +
-                    highestMag + "\n Lowest mag so far: " + lowestMag + "\n This fall: " + fallMag
-                    +
-                    "\n Fall time: " +testTime + "\n" + testLog);
-            //mStatus.setBackgroundColor(Color.GREEN);*/
-            setBackground(green);
-            mOkay.setEnabled(false);
-            mOkay.setBackgroundColor(Color.TRANSPARENT);
+    private void getHumidity(SensorEvent event){
+        float humidity = event.values[0]; //laying flat on table, pushed from left to right is (+, aka >9.81)
+        countHumidity += 1;
+        motionRAW.setAvgHumdity(Average(motionRAW.getAvgHumidity(), humidity, countHumidity));
+    }
 
-        }
+    private void getTemp(SensorEvent event){
+        float temp = event.values[0]; //laying flat on table, pushed from left to right is (+, aka >9.81)
+        countTempCel += 1;
+        motionRAW.setAvgTempCel(Average(motionRAW.getAvgTempCel(), temp, countTempCel));
+    }
+
+    private void getStep(SensorEvent event){
+        float step = event.values[0]; //laying flat on table, pushed from left to right is (+, aka >9.81)
+        motionRAW.setTotalSteps(motionRAW.getTotalSteps() + 1);
     }
 
     @Override
@@ -152,7 +187,6 @@ public class IndividualActivity extends AppCompatActivity implements SensorEvent
         sensorManager.registerListener(this,
                 sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
                 SensorManager.SENSOR_DELAY_NORMAL);
-        updateStatus(crashMode);
     }
 
     @Override
@@ -160,6 +194,7 @@ public class IndividualActivity extends AppCompatActivity implements SensorEvent
         // unregister listener
         super.onPause();
         sensorManager.unregisterListener(this);
+        saveData();
     }
 
     //Up button
