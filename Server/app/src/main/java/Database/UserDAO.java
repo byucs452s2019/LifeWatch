@@ -3,6 +3,7 @@ package Database;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 import Database.Model.UserModel;
 
@@ -12,9 +13,9 @@ import Database.Model.UserModel;
 
 public class UserDAO {
 
-    public boolean insert (UserModel user) {
+    public int insert (UserModel user) {
         SQLDBConnection connection = new SQLDBConnection();
-        Boolean result = false;
+        int result = -1;
         String statement = "INSERT INTO user (username, password, email, age, profession) " +
                 "VALUES (?, ?, ?, ?, ?)";
         PreparedStatement ps = connection.getPreparedStatment(statement);
@@ -28,7 +29,6 @@ public class UserDAO {
             result = connection.executeUpdateStatement(ps);
         } catch (SQLException e) {
             e.printStackTrace();
-            result = false;
         }
         connection.closeConnection();
         return result;
@@ -60,24 +60,51 @@ public class UserDAO {
         return userModel;
     }
 
-    public boolean update(){
+    public int update(UserModel userModel){
         SQLDBConnection connection = new SQLDBConnection();
-        Boolean result = false;
-        String statement = "Update user Set email = 'yeah' where username = 'hao';";
+        int result = -1;
+        String statement =
+                "Update user Set password = ?, " +
+                        "email = ?, " +
+                        "age = ?, " +
+                        "profession = ? " +
+                        "Where username = ?" +
+                        ";";
         PreparedStatement ps = connection.getPreparedStatment(statement);
         try {
+            ps.setString(1, userModel.getPassword());
+            ps.setString(2, userModel.getEmail());
+            ps.setInt(3, userModel.getAge());
+            ps.setString(4, userModel.getProfession());
+            ps.setString(5, userModel.getUsername());
             result = connection.executeUpdateStatement(ps);
-            if (result) {
-                System.out.println("success");
-            }
-            else {
-                System.out.println("failed");
-            }
         } catch (Exception e) {
             e.printStackTrace();
-            result = false;
         }
         connection.closeConnection();
         return result;
+    }
+
+    public int delete(String username) {
+        SQLDBConnection connection = new SQLDBConnection();
+        int result = -1;
+        String stmt = "Delete from user where username = ?";
+        PreparedStatement ps = connection.getPreparedStatment(stmt);
+        try{
+            ps.setString(1, username);
+            result = connection.executeUpdateStatement(ps);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        connection.closeConnection();
+        return result;
+    }
+
+    public void clear() {
+        SQLDBConnection connection = new SQLDBConnection();
+        String sql = "DELETE FROM user";
+        PreparedStatement stmt = connection.getPreparedStatment(sql);
+        connection.executeUpdateStatement(stmt);
+        connection.closeConnection();
     }
 }

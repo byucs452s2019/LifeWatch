@@ -28,10 +28,10 @@ import Database.Model.MotionModel;
 
 public class MotionDAO{
     SQLDBConnection connection;
-    public boolean addMotionEvent(String username, MotionModel motion){
+    public int insert (String username, MotionModel motion){
         connection = new SQLDBConnection();
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        Boolean result = null;
+        int result = 0;
         String statement = "INSERT INTO motion (username, time, motionBlob) " +
                 "VALUES (?, ?, ?)";
         PreparedStatement ps = connection.getPreparedStatment(statement);
@@ -41,51 +41,76 @@ public class MotionDAO{
             out.flush();
             byte[] bytes = bos.toByteArray();
             ps.setString(1,username);
-            ps.setString(2, Float.toString(motion.getStartTime()));
+            ps.setTimestamp(2, new Timestamp((long) motion.getStartTime()));
             ps.setBytes(3, bytes);
+
             result = connection.executeUpdateStatement(ps);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             connection.closeConnection();
-            return false;
-        } catch (IOException ie){
-            ie.printStackTrace();
-            connection.closeConnection();
-            return false;
-        }
-        if (result == null) {
-            connection.closeConnection();
-            return false;
+            return -1;
         }
         connection.closeConnection();
-        return true;
+        return result;
     }
 
-    public boolean deleteMotionEvent(String username, String startTime) {
+    public int update(String username, float startTime, MotionModel motion) {
         connection = new SQLDBConnection();
-        Boolean result = null;
-        String statement = "DELETE FROM motion WHERE username='" +
-                username + "' and time='" + startTime + "';";
-        PreparedStatement ps = connection.getPreparedStatment(statement);
-        result = connection.executeUpdateStatement(ps);
-        if (result == null) {
-            connection.closeConnection();
-            return false;
+        int result = 0;
+        String stmt =   "Update motion " +
+                        "Set time = ?, " +
+                        "motionBlob = ? " +
+                        "Where  username = ? And time = ?;";
+        PreparedStatement ps = connection.getPreparedStatment(stmt);
+
+        try {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ObjectOutput out = new ObjectOutputStream(bos);
+            out.writeObject(motion);
+            out.flush();
+            byte[] bytes = bos.toByteArray();
+
+            ps.setTimestamp(1, new Timestamp((long) motion.getStartTime()));
+            ps.setBytes(2, bytes);
+            ps.setString(3,username);
+            ps.setTimestamp(4, new Timestamp((long) startTime));
+            result = connection.executeUpdateStatement(ps);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         connection.closeConnection();
-        return true;
+        return result;
+    }
+
+    public int deleteMotion(String username, float startTime) {
+        connection = new SQLDBConnection();
+        int result = -1;
+        String statement = "DELETE FROM motion WHERE username= ? and time= ?;";
+        PreparedStatement ps = connection.getPreparedStatment(statement);
+        try {
+            ps.setString(1, username);
+            ps.setTimestamp(2, new Timestamp((long) startTime));
+            result = connection.executeUpdateStatement(ps);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+        connection.closeConnection();
+        return result;
     }
 
 
-    public MotionModel getMotionEvent(String username, String startTime){
+    public MotionModel getMotion(String username, float startTime){
         connection = new SQLDBConnection();
         ByteArrayInputStream bis;
         ObjectInput in = null;
         MotionModel m = null;
         try{
-            String sql = "SELECT * FROM motion WHERE username='" +
-                    username + "' and time='" + startTime + "';";
+            String sql = "SELECT * FROM motion WHERE username = ? and time = ?;";
+
             PreparedStatement stmt = connection.getPreparedStatment(sql);
+            stmt.setString(1, username);
+            stmt.setTimestamp(2, new Timestamp((long) startTime));
             ResultSet result = connection.executeQueryStatement(stmt);
             try{
                 while(result.next()){
@@ -115,7 +140,7 @@ public class MotionDAO{
 
     public void clear() {
         connection = new SQLDBConnection();
-        String sql = "DELETE FROM motion where 1=1;";
+        String sql = "DELETE FROM motion;";
         PreparedStatement stmt = connection.getPreparedStatment(sql);
         connection.executeUpdateStatement(stmt);
         connection.closeConnection();

@@ -32,11 +32,11 @@ public class SQLDBConnection {
         try {
             if(!file.exists()) {
                 if (file.createNewFile()) {
-                    System.out.println("file has been created");
+                    System.out.println("DB file: created successfully");
                     createTables();
                     return true;
                 } else {
-                    System.out.println("failed to create a file");
+                    System.out.println("DB file: failed to create");
                 }
             }
         }
@@ -47,24 +47,29 @@ public class SQLDBConnection {
     }
 
     private Boolean createTables(){
-        String createUserTable = "CREATE TABLE user (" +
+        String createUserTable =
+                "CREATE TABLE user (" +
                 "username varchar(25) PRIMARY KEY, " +
                 "password varchar(25)," +
                 "email varchar(50)," +
                 "age int(2)," +
                 "profession varchar(25)" +
                 ");";
-        String createMotionTable = "CREATE TABLE motion (" +
+        String createMotionTable =
+                "CREATE TABLE motion (" +
                 "username varchar(25), " +
-                "time varchar(50)," +
-                "motionBlob BLOB" +
+                "time datetime," +
+                "motionBlob BLOB," +
+                "PRIMARY KEY(username, time)" +
                 ");";
-        String createActivityTable = "CREATE TABLE activity (" +
+        String createActivityTable =
+                "CREATE TABLE activity (" +
                 "username varchar(25), " +
                 "startTime datetime, " +
                 "endTime datetime," +
                 "activityType varchar(25)," +
-                "location varchar(25)" +
+                "location varchar(25)," +
+                "PRIMARY KEY(username, startTime, endTime)" +
                 ");";
         openConnection();
         PreparedStatement u = getPreparedStatment(createUserTable);
@@ -132,20 +137,20 @@ public class SQLDBConnection {
          }
      }
 
-     public boolean executeUpdateStatement(PreparedStatement p) {
+     public int executeUpdateStatement(PreparedStatement p) {
          try{
              numberProcess--;
              int count = p.executeUpdate();
              if (count == 0) {
                  conn.rollback();
-                 return false;
+                 return count;
              }
              conn.commit();
-             return true;
+             return count;
 
          } catch (SQLException e) {
              e.printStackTrace();
-             return false;
+             return -1;
          }
      }
 

@@ -12,6 +12,7 @@ import java.io.ObjectOutputStream;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 
 import Database.Model.ActivityModel;
 import Database.Model.MotionModel;
@@ -22,66 +23,60 @@ import Database.Model.MotionModel;
 
 public class ActivityDAO {
     SQLDBConnection connection;
-    public boolean addActivity(String username, ActivityModel activity){
+    public int insert (ActivityModel activity){
         connection = new SQLDBConnection();
-        Boolean result = null;
+        int result = -1;
         String statement = "INSERT INTO activity (username, startTime, endTime, activityType, location) " +
-                "VALUES (?, ?, ?)";
+                "VALUES (?, ?, ?, ?, ?)";
         PreparedStatement ps = connection.getPreparedStatment(statement);
         try{
-            ps.setString(1,username);
-            ps.setString(2, activity.getStartTime());
-            ps.setString(3, activity.getEndTime());
+            ps.setString(1,activity.getUsername());
+            ps.setTimestamp(2, new Timestamp((long) activity.getStartTime()));
+            ps.setTimestamp(3, new Timestamp((long) activity.getStartTime()));
             ps.setString(4, activity.getActivityType());
             ps.setString(5, activity.getLocation());
             result = connection.executeUpdateStatement(ps);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-            connection.closeConnection();
-            return false;
         }
-        if (result == null) {
-            connection.closeConnection();
-            return false;
-        }
+
         connection.closeConnection();
-        return true;
+        return result;
     }
 
-    public boolean deleteActivity(String username, String startTime) {
+    public int deleteActivity(String username, float startTime) {
         connection = new SQLDBConnection();
-        Boolean result = null;
-        String statement = "DELETE FROM motion WHERE username='" +
-                username + "' and startTime='" + startTime + "';";
+        int result = -1;
+        String statement = "DELETE FROM motion WHERE username = ? And startTime = ? ;";
         PreparedStatement ps = connection.getPreparedStatment(statement);
-        result = connection.executeUpdateStatement(ps);
-        if (result == null) {
-            connection.closeConnection();
-            return false;
+        try {
+            ps.setString(1, username);
+            ps.setTimestamp(2, new Timestamp((long) startTime));
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+        result = connection.executeUpdateStatement(ps);
         connection.closeConnection();
-        return true;
+        return result;
     }
 
 
-    public ActivityModel getActivity(String username, String startTime){
+    public ActivityModel getActivity(String username, float startTime){
         connection = new SQLDBConnection();
         ActivityModel m = new ActivityModel();
         try{
-            String sql = "SELECT * FROM activity WHERE username='" +
-                    username + "' and startTime='" + startTime + "';";
-            PreparedStatement stmt = connection.getPreparedStatment(sql);
-            ResultSet result = connection.executeQueryStatement(stmt);
-            try{
-                while(result.next()){
-                    m.setUsername(result.getString("username"));
-                    m.setStartTime(result.getString("startTime"));
-                    m.setEndTime(result.getString("endTime"));
-                    m.setActivityType(result.getString("activityType"));
-                    m.setLocation(result.getString("location"));
-                }
-            }
-            finally {
+            String sql = "SELECT * FROM activity WHERE username= ? and startTime= ?;";
+            PreparedStatement ps = connection.getPreparedStatment(sql);
+            ps.setString(1, username);
+            ps.setTimestamp(2, new Timestamp((long) startTime));
+            ResultSet result = connection.executeQueryStatement(ps);
+
+            while(result.next()){
+                m.setUsername(result.getString("username"));
+                m.setStartTime((float)result.getTime("startTime").getTime());
+                m.setEndTime((float)result.getTime("endTime").getTime());
+                m.setActivityType(result.getString("activityType"));
+                m.setLocation(result.getString("location"));
             }
         }
         catch(Exception e){
@@ -92,9 +87,35 @@ public class ActivityDAO {
         return m;
     }
 
+    public int update (float prevStartTime, float prevEndTime, ActivityModel activityModel) {
+        connection = new SQLDBConnection();
+        int result = -1;
+        String stmt = "Update activity " +
+                "Set startTime = ?, " +
+                "endTime = ?, " +
+                "activityType = ?, " +
+                "location = ? " +
+                "Where username = ? And startTime = ? And endTime = ?;";
+        PreparedStatement ps = connection.getPreparedStatment(stmt);
+        try{
+            ps.setTimestamp(1, new Timestamp((long) activityModel.getStartTime()));
+            ps.setTimestamp(2, new Timestamp((long) activityModel.getEndTime()));
+            ps.setString(3, activityModel.getActivityType());
+            ps.setString(4, activityModel.getLocation());
+            ps.setString(5, activityModel.getUsername());
+            ps.setTimestamp(6, new Timestamp((long) prevStartTime));
+            ps.setTimestamp(7, new Timestamp((long) prevEndTime));
+            result = connection.executeUpdateStatement(ps);
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+        connection.closeConnection();
+        return result;
+    }
+
     public void clear() {
         connection = new SQLDBConnection();
-        String sql = "DELETE FROM activity where 1=1;";
+        String sql = "DELETE FROM activity";
         PreparedStatement stmt = connection.getPreparedStatment(sql);
         connection.executeUpdateStatement(stmt);
         connection.closeConnection();

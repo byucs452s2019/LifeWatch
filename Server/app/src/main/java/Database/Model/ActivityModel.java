@@ -6,8 +6,8 @@ package Database.Model;
 
 public class ActivityModel {
     private String username;
-    private String startTime;
-    private String endTime;
+    private float startTime;
+    private float endTime;
     private String activityType;
     private String location;
 
@@ -19,19 +19,19 @@ public class ActivityModel {
         this.username = username;
     }
 
-    public String getStartTime() {
+    public float getStartTime() {
         return startTime;
     }
 
-    public void setStartTime(String startTime) {
+    public void setStartTime(float startTime) {
         this.startTime = startTime;
     }
 
-    public String getEndTime() {
+    public float getEndTime() {
         return endTime;
     }
 
-    public void setEndTime(String endTime) {
+    public void setEndTime(float endTime) {
         this.endTime = endTime;
     }
 
@@ -51,4 +51,26 @@ public class ActivityModel {
         this.location = location;
     }
 
+    public ActivityModel(String username, float startTime, float endTime, String activityType, String location) {
+        this.username = username;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.activityType = activityType;
+        this.location = location;
+    }
+
+    public  ActivityModel () {
+
+    }
+
+    @Override
+    public String toString() {
+        return "ActivityModel{" +
+                "username='" + username + '\'' +
+                ", startTime=" + startTime +
+                ", endTime=" + endTime +
+                ", activityType='" + activityType + '\'' +
+                ", location='" + location + '\'' +
+                '}';
+    }
 }
