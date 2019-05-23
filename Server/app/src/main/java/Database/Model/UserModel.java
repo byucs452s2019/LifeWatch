@@ -58,4 +58,15 @@ public class UserModel {
     public void setProfession(String profession) {
         this.profession = profession;
     }
+
+    @Override
+    public String toString() {
+        return "UserModel{" +
+                "username='" + username + '\'' +
+                ", password='" + password + '\'' +
+                ", email='" + email + '\'' +
+                ", age=" + age +
+                ", profession='" + profession + '\'' +
+                '}';
+    }
 }

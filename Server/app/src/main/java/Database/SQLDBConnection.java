@@ -24,7 +24,6 @@ public class SQLDBConnection {
 
         String fileName="server.db";
         this.url = fileDirectory + fileName;
-        System.out.println(url);
     }
 
 
@@ -60,7 +59,7 @@ public class SQLDBConnection {
                 "time datetime," +
                 "motionBlob BLOB" +
                 ");";
-        String createActivityTable = "CREATE TABLE ativity (" +
+        String createActivityTable = "CREATE TABLE activity (" +
                 "username varchar(25), " +
                 "startTime datetime, " +
                 "endTime datetime," +
@@ -103,32 +102,7 @@ public class SQLDBConnection {
         }
         return false;
     }
-//     TODO: never used
-//     public ResultSet executeCommand (String stmtString) {
-//         if (openConnection()) {
-//             try {
-//                 conn.setAutoCommit(false);
-//                 Statement stmt = conn.createStatement();
-//                 numberProcess--;
-//                 if (stmt.execute(stmtString)) {
-//                     conn.commit();
-//                     closeConnection();
-//                     return stmt.getResultSet();
-//                 }
-//                 else {
-//                     conn.rollback();
-//                 }
-//             }catch (SQLException e) {
-//                 e.printStackTrace();
-//             }catch (Exception e) {
-//                 e.printStackTrace();
-//             }
-//             closeConnection();
-//         }
-//         return null;
-//     }
 
-    // return null for false result
     public PreparedStatement getPreparedStatment(String sql){
         PreparedStatement preparedStatement = null;
         if (openConnection()) {
@@ -145,35 +119,10 @@ public class SQLDBConnection {
         return preparedStatement;
     }
 
-    public Statement getStatement() {
-        if (openConnection()) {
-            try {
-                numberProcess++;
-                return conn.createStatement();
-            }
-            catch(SQLException e) {
-                e.printStackTrace();
-                closeConnection();
-            }
-
-        }
-        return null;
-    }
-
      public ResultSet executeQueryStatement(PreparedStatement p) {
          try{
              numberProcess--;
              ResultSet rs  = p.executeQuery();
-
-             if (rs.getFetchSize() == 0) {
-                 conn.rollback();
-                 closeConnection();
-                 System.out.println("Execute result is false.");
-                 System.out.println(p.getWarnings());
-                 return null;
-             }
-             conn.commit();
-             closeConnection();
              return rs;
 
          } catch (SQLException e) {
@@ -189,22 +138,18 @@ public class SQLDBConnection {
              int count = p.executeUpdate();
              if (count == 0) {
                  conn.rollback();
-                 closeConnection();
-                 System.out.println("Execute result is falise.");
                  return false;
              }
              conn.commit();
-             closeConnection();
              return true;
 
          } catch (SQLException e) {
              e.printStackTrace();
-             closeConnection();
-             return true;
+             return false;
          }
      }
 
-    private boolean closeConnection() {
+    public boolean closeConnection() {
         if (conn != null) {
             try {
                 if (numberProcess == 0) {
