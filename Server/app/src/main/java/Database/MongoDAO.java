@@ -104,11 +104,11 @@ public class MongoDAO {
         return true;
     }
 
-    private MongoDatabase getDBInstance(){
+    public MongoDatabase getDBInstance(){
         return mongoClient.getDatabase(dbname);
     }
 
-    private boolean checkUserExist(String userName) {
+    public boolean checkUserExist(String userName) {
         MongoDatabase db = getDBInstance();
         MongoCollection<Document> check = db.getCollection(userName);
 
@@ -118,7 +118,7 @@ public class MongoDAO {
         return false;
     }
 
-    private ArrayList<String> getUsers(){
+    public ArrayList<String> getUsers(){
         ArrayList<String> users = new ArrayList<String>();
         MongoDatabase db = getDBInstance();
         MongoIterable<String> check = db.listCollectionNames();
@@ -128,7 +128,7 @@ public class MongoDAO {
         return users;
     }
 
-    private ArrayList<String> getMotions(String username){
+    public ArrayList<String> getMotions(String username){
         ArrayList<String> motions = new ArrayList<String>();
         MongoDatabase db = getDBInstance();
         MongoCollection<Document> collection = db.getCollection(username);
@@ -144,7 +144,7 @@ public class MongoDAO {
         return motions;
     }
 
-    private ArrayList<String> getActivities(String username){
+    public ArrayList<String> getActivities(String username){
         ArrayList<String> activities = new ArrayList<String>();
         MongoDatabase db = getDBInstance();
         MongoCollection<Document> collection = db.getCollection(username);
@@ -161,33 +161,60 @@ public class MongoDAO {
     }
 
 
-    private Double getTempByStartTime(String username, float startTime) {
+    public Double getTempByStartTime(String username, float startTime) {
         MongoDatabase db = getDBInstance();
         MongoCollection<Document> collection = db.getCollection(username);
         Document doc = collection.find(gt("startTime", startTime)).first();
         return doc.getDouble("avgTempCel");
     }
 
-    private long cleanMotion(String username) {
+    public long cleanMotion(String username) {
         MongoDatabase db = getDBInstance();
         MongoCollection<Document> collection = db.getCollection(username);
         DeleteResult deleteResult = collection.deleteMany(gte("doctype", "motion"));
         return deleteResult.getDeletedCount();
     }
-    private long cleanActivity(String username) {
+    public long cleanActivity(String username) {
         MongoDatabase db = getDBInstance();
         MongoCollection<Document> collection = db.getCollection(username);
         DeleteResult deleteResult = collection.deleteMany(gte("doctype", "activity"));
         return deleteResult.getDeletedCount();
     }
 
-    private void deleteUser(String username){
+    public void deleteUser(String username){
         MongoDatabase db = getDBInstance();
         MongoCollection<Document> collection = db.getCollection(username);
         collection.drop();
     }
 
-    private void updateMotion(String username, MotionModel motionModel) {
-        collection.updateOne(eq("start_time", motionModel.getStartTime()), new Document("$set", new Document("i", 110)));
+    public void updateMotion(String username, MotionModel motionModel) {
+        MongoDatabase db = getDBInstance();
+        MongoCollection<Document> collection = db.getCollection(username);
+        Document motion =  new Document("start_time", motionModel.getStartTime())
+                .append("end_time", motionModel.getEndTime())
+                .append("avgXAcceleration", motionModel.getAvgXAcceleration())
+                .append("avgYAcceleration", motionModel.getAvgYAcceleration())
+                .append("avgZAcceleration", motionModel.getAvgZAcceleration())
+                .append("avgXGyro", motionModel.getAvgXGyro())
+                .append("avgYGyro", motionModel.getAvgYGyro())
+                .append("avgZGyro", motionModel.getAvgZGyro())
+                .append("avgTempCel", motionModel.getAvgTempCel())
+                .append("avgPressure", motionModel.getAvgPressure())
+                .append("avgHumidity", motionModel.getAvgHumidity())
+                .append("totalStep", motionModel.getTotalSteps())
+                .append("doctype", "motion");
+        collection.updateOne(and(eq("doctype", "motion"),eq("start_time", motionModel.getStartTime())), motion)
+    }
+
+    public void updateActivity(String username, ActivityModel activityModel) {
+        MongoDatabase db = getDBInstance();
+        MongoCollection<Document> collection = db.getCollection(username);
+        Document activity =  new Document("start_time", activityModel.getStartTime())
+                .append("end_time", activityModel.getEndTime())
+                .append("location", activityModel.getLocation())
+                .append("activityType", activityModel.getActivityType())
+                .append("doctype", "activity");
+        collection.updateOne(and(eq("doctype", "activity"),eq("start_time", activityModel.getStartTime())), activity);
+
     }
 }
