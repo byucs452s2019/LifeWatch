@@ -99,5 +99,9 @@ public class Server {
         activity = activityDAO.getActivity("J", 101010);
         System.out.println("activity got: " + activity.toString());
 
+
+        MongoDAO mongoDAO = new MongoDAO();
+        mongoDAO
+
     }
 }
