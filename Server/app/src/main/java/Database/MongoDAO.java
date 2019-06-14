@@ -204,7 +204,7 @@ public class MongoDAO {
                 .append("avgHumidity", motionModel.getAvgHumidity())
                 .append("totalStep", motionModel.getTotalSteps())
                 .append("doctype", "motion");
-        collection.updateOne(and(eq("doctype", "motion"),eq("start_time", motionModel.getStartTime())), motion)
+        collection.updateOne(and(eq("doctype", "motion"),eq("start_time", motionModel.getStartTime())), motion);
     }
 
     public void updateActivity(String username, ActivityModel activityModel) {
