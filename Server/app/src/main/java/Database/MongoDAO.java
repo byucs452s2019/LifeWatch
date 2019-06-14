@@ -36,7 +36,7 @@ public class MongoDAO {
     private static MongoClient mongoClient = null;
     private static final String dbname = "DocDB";
 
-    private static  void startClient(){
+    public static  void startClient(){
         if (mongoClient == null) {
             mongoClient = MongoClients.create();
         }
