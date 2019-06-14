@@ -190,6 +190,7 @@ public class MongoDAO {
     public void updateMotion(String username, MotionModel motionModel) {
         MongoDatabase db = getDBInstance();
         MongoCollection<Document> collection = db.getCollection(username);
+
         Document motion =  new Document("start_time", motionModel.getStartTime())
                 .append("end_time", motionModel.getEndTime())
                 .append("avgXAcceleration", motionModel.getAvgXAcceleration())
@@ -215,6 +216,7 @@ public class MongoDAO {
                 .append("activityType", activityModel.getActivityType())
                 .append("doctype", "activity");
         collection.updateOne(and(eq("doctype", "activity"),eq("start_time", activityModel.getStartTime())), activity);
+
 
     }
 }
