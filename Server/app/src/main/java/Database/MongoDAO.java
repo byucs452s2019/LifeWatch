@@ -174,4 +174,20 @@ public class MongoDAO {
         DeleteResult deleteResult = collection.deleteMany(gte("doctype", "motion"));
         return deleteResult.getDeletedCount();
     }
+    private long cleanActivity(String username) {
+        MongoDatabase db = getDBInstance();
+        MongoCollection<Document> collection = db.getCollection(username);
+        DeleteResult deleteResult = collection.deleteMany(gte("doctype", "activity"));
+        return deleteResult.getDeletedCount();
+    }
+
+    private void deleteUser(String username){
+        MongoDatabase db = getDBInstance();
+        MongoCollection<Document> collection = db.getCollection(username);
+        collection.drop();
+    }
+
+    private void updateMotion(String username, MotionModel motionModel) {
+        collection.updateOne(eq("start_time", motionModel.getStartTime()), new Document("$set", new Document("i", 110)));
+    }
 }
